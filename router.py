@@ -1,6 +1,4 @@
-"""
-API router for authentication endpoints.
-"""
+
 
 import uuid
 from datetime import datetime, timedelta
@@ -52,7 +50,7 @@ async def signup(
     await db.refresh(new_user)
 
     return schemas.UserResponse(
-        id=new_user.id, email=new_user.email, created_at=new_user.created_at
+        id=str(new_user.id), email=new_user.email, created_at=new_user.created_at
     )
 
 
@@ -116,10 +114,47 @@ async def create_api_key(request: Request, db: AsyncSession = Depends(database.g
     await db.refresh(new_key)
 
     return schemas.CreateKeyResponse(
-        id=new_key.id,
-        key=api_key,  # Return the plain key (shown once)
+        id=str(new_key.id),
+        key=api_key,
         expires_at=new_key.expires_at,
     )
+
+
+@router.delete("/keys/{key_id}", response_model=schemas.RevokeKeyResponse)
+async def revoke_api_key(
+    key_id: str, request: Request, db: AsyncSession = Depends(database.get_db)
+):
+    """
+    Revoke an existing API key owned by the authenticated user.
+
+    Args:
+        key_id (str): The ID of the API key to revoke.
+        request (Request): The request object for authentication.
+        db (AsyncSession): The database session dependency.
+
+    Returns:
+        RevokeKeyResponse: Confirmation message.
+
+    Raises:
+        HTTPException: 401 if not authenticated, 404 if key not found or not owned by user.
+    """
+    user, _ = await auth.get_current_user_or_service(request, db)
+
+    # Find the key owned by this user
+    result = await db.execute(
+        select(models.APIKey).where(
+            models.APIKey.id == key_id, models.APIKey.user_id == user.id
+        )
+    )
+    api_key = result.scalars().first()
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+
+    # Revoke the key
+    api_key.revoked = True
+    await db.commit()
+
+    return schemas.RevokeKeyResponse(message="API key revoked successfully")
 
 
 # Protected routes demonstrating middleware detection
@@ -144,9 +179,9 @@ async def protected_user_endpoint(
     if auth_type != "user":
         raise HTTPException(status_code=403, detail="User authentication required")
     return schemas.UserResponse(
-        id=user.id, email=user.email, created_at=user.created_at
+        id=str(user.id), email=user.email, created_at=user.created_at
     )
-# Ddk0isYD8w9iE8vey2drdM-EdJuld6S_k1uscfXQkIc
+
 
 @router.get("/protected/service", response_model=schemas.ServiceResponse)
 async def protected_service_endpoint(
@@ -167,7 +202,7 @@ async def protected_service_endpoint(
     """
     user, auth_type = await auth.get_current_user_or_service(request, db)
     return schemas.ServiceResponse(
-        user_id=user.id,
+        user_id=str(user.id),
         auth_type=auth_type,
         message=f"Accessed by {auth_type} authentication",
     )

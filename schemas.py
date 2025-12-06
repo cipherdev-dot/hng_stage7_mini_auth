@@ -19,18 +19,22 @@ class TokenResponse(BaseModel):
 
 
 class CreateKeyResponse(BaseModel):
-    id: int
+    id: str
     key: str  # The actual API key (shown once)
     expires_at: datetime
 
 
 class UserResponse(BaseModel):
-    id: int
+    id: str
     email: str
     created_at: datetime
 
 
 class ServiceResponse(BaseModel):
-    user_id: int
+    user_id: str
     auth_type: str  # "user" or "service"
+    message: str
+
+
+class RevokeKeyResponse(BaseModel):
     message: str

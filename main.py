@@ -1,6 +1,4 @@
-"""
-Main FastAPI application for Mini Authentication System.
-"""
+
 
 from contextlib import asynccontextmanager
 
@@ -17,7 +15,7 @@ async def lifespan(app: FastAPI):
     # Startup: create tables
     await database.init_db()
     yield
-    # Shutdown: cleanup if needed
+  
 
 app = FastAPI(
     title="Mini Authentication API",

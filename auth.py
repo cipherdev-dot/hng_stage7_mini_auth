@@ -1,6 +1,3 @@
-"""
-Authentication utilities for JWT and API key handling.
-"""
 
 import datetime
 import hashlib
@@ -23,7 +20,7 @@ from config import settings as config
 import models
 import schemas
 
-# Argon2id hasher - current best practice (2025)
+# Argon2id hasher 
 ph = PasswordHasher(
     time_cost=3,
     memory_cost=65536,
@@ -103,7 +100,7 @@ def verify_token(token: str) -> Optional[dict]:
 
 def generate_api_key() -> str:
     """Generate a new random API key."""
-    return secrets.token_urlsafe(32)  # 32 bytes = 43 char string
+    return secrets.token_urlsafe(32)  
 
 
 def hash_api_key(key: str) -> str:
